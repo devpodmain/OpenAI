@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { z } from "zod";
+// zod import not used; keeping code minimal
 import { readFileSync } from "fs";
 import { join } from "path";
 import { getCostAnalysis, getServiceBreakdown, getReportCriteria } from "./mcp/tools/cloudDashboard";
@@ -161,6 +161,7 @@ app.post("/mcp", async (req, res) => {
               name: tool.name,
               description: tool.description,
               inputSchema: tool.inputSchema,
+              ...(tool.outputSchema && { outputSchema: tool.outputSchema }),
               ...(tool._meta && { _meta: tool._meta })
             }))
           }
@@ -177,21 +178,30 @@ app.post("/mcp", async (req, res) => {
                 uri: "ui://widget/cost-analysis.html",
                 name: "cost-analysis-ui",
                 description: "Cost analysis UI component",
-                mimeType: "text/html+skybridge"
+                mimeType: "text/html"
               },
               {
                 uri: "ui://widget/service-breakdown.html",
                 name: "service-breakdown-ui",
                 description: "Service breakdown UI component",
-                mimeType: "text/html+skybridge"
+                mimeType: "text/html"
               },
               {
                 uri: "ui://widget/report-criteria.html",
                 name: "report-criteria-ui",
                 description: "Report criteria UI component",
-                mimeType: "text/html+skybridge"
+                mimeType: "text/html"
               }
             ]
+          }
+        });
+
+      case "resources/templates/list":
+        return res.json({
+          jsonrpc: "2.0",
+          id,
+          result: {
+            resourceTemplates: []
           }
         });
 
@@ -209,7 +219,7 @@ app.post("/mcp", async (req, res) => {
                 contents: [
                   {
                     uri: "ui://widget/cost-analysis.html",
-                    mimeType: "text/html+skybridge",
+                    mimeType: "text/html",
                     text: htmlContent
                   }
                 ]
@@ -235,7 +245,7 @@ app.post("/mcp", async (req, res) => {
                 contents: [
                   {
                     uri: "ui://widget/service-breakdown.html",
-                    mimeType: "text/html+skybridge",
+                    mimeType: "text/html",
                     text: htmlContent
                   }
                 ]
@@ -261,7 +271,7 @@ app.post("/mcp", async (req, res) => {
                 contents: [
                   {
                     uri: "ui://widget/report-criteria.html",
-                    mimeType: "text/html+skybridge",
+                    mimeType: "text/html",
                     text: htmlContent
                   }
                 ]
@@ -315,7 +325,8 @@ app.post("/mcp", async (req, res) => {
           result: {
             protocolVersion: "2024-11-05",
             capabilities: {
-              tools: {}
+              tools: {},
+              resources: {}
             },
             serverInfo: {
               name: "cloud-cost-dashboard",

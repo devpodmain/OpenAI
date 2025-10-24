@@ -75,14 +75,6 @@
 
   <script>
     let data = {};
-    function normalizeLabels() {
-      const labels = document.querySelectorAll('.summary-section .summary-label');
-      if (labels.length >= 3) {
-        labels[0].textContent = 'Total Cost / Month';
-        labels[1].textContent = 'Spending compared to last month';
-        labels[2].textContent = 'Savings';
-      }
-    }
     function getData() {
       if (window.openai && window.openai.toolOutput) {
         const t = window.openai.toolOutput;
@@ -143,10 +135,10 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       data = getData();
-      normalizeLabels();
       updateSummaryValues();
       generateChart();
     });
   </script>
 </body>
 </html>
+
