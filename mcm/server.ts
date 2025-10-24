@@ -4,7 +4,12 @@ import dotenv from "dotenv";
 import { z } from "zod";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { cloudDashboardTool, getCloudDashboard } from "./mcp/tools/cloudDashboard.js";
+import {
+  getCloudDashboard,
+  getCostAnalysis,
+  getServiceBreakdown,
+  getReportCriteria,
+} from "./mcp/tools/cloudDashboard";
 
 dotenv.config();
 const app = express();
@@ -60,6 +65,73 @@ const tools = [
     _meta: {
       "openai/outputTemplate": "ui://widget/cloud-dashboard.html"
     }
+  },
+  {
+    name: "dashboard.cost-analysis",
+    description: "Cost analysis summary and time series.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        dateRange: {
+          type: "object",
+          properties: {
+            fromISO: { type: "string" },
+            toISO: { type: "string" }
+          }
+        },
+        providers: { type: "array", items: { type: "string" } },
+        granularity: { type: "string", enum: ["day", "week", "month"] }
+      }
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        summary: { type: "object" },
+        providers: { type: "array" },
+        series: { type: "array" }
+      }
+    },
+    _meta: { "openai/outputTemplate": "ui://widget/cost-analysis.html" }
+  },
+  {
+    name: "dashboard.service-breakdown",
+    description: "Service cost breakdown table.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        dateRange: { type: "object" },
+        provider: { type: "string" },
+        limit: { type: "number" },
+        sortBy: { type: "string", enum: ["billed", "effective"] }
+      }
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        services: { type: "array" }
+      }
+    },
+    _meta: { "openai/outputTemplate": "ui://widget/service-breakdown.html" }
+  },
+  {
+    name: "dashboard.report-criteria",
+    description: "Criteria presets and current selection.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        current: { type: "object" }
+      }
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        presets: { type: "array" },
+        providers: { type: "array" },
+        tags: { type: "array" },
+        current: { type: "object" }
+      }
+    },
+    _meta: { "openai/outputTemplate": "ui://widget/report-criteria.html" }
   }
 ];
 
@@ -78,6 +150,27 @@ const toolImplementations: Record<string, (args?: any) => Promise<any>> = {
       _meta: {
         "openai/outputTemplate": "ui://widget/cloud-dashboard.html"
       }
+    };
+  },
+  "dashboard.cost-analysis": async (args) => {
+    const result = await getCostAnalysis(args);
+    return {
+      ...result,
+      _meta: { "openai/outputTemplate": "ui://widget/cost-analysis.html" }
+    };
+  },
+  "dashboard.service-breakdown": async (args) => {
+    const result = await getServiceBreakdown(args);
+    return {
+      ...result,
+      _meta: { "openai/outputTemplate": "ui://widget/service-breakdown.html" }
+    };
+  },
+  "dashboard.report-criteria": async (args) => {
+    const result = await getReportCriteria(args);
+    return {
+      ...result,
+      _meta: { "openai/outputTemplate": "ui://widget/report-criteria.html" }
     };
   }
 };
@@ -122,6 +215,24 @@ app.post("/mcp", async (req, res) => {
                 name: "cloud-dashboard-ui",
                 description: "Cloud cost dashboard UI component",
                 mimeType: "text/html+skybridge"
+              },
+              {
+                uri: "ui://widget/cost-analysis.html",
+                name: "cost-analysis-ui",
+                description: "Cost analysis UI component",
+                mimeType: "text/html+skybridge"
+              },
+              {
+                uri: "ui://widget/service-breakdown.html",
+                name: "service-breakdown-ui",
+                description: "Service breakdown UI component",
+                mimeType: "text/html+skybridge"
+              },
+              {
+                uri: "ui://widget/report-criteria.html",
+                name: "report-criteria-ui",
+                description: "Report criteria UI component",
+                mimeType: "text/html+skybridge"
               }
             ]
           }
@@ -140,6 +251,84 @@ app.post("/mcp", async (req, res) => {
                 contents: [
                   {
                     uri: "ui://widget/cloud-dashboard.html",
+                    mimeType: "text/html+skybridge",
+                    text: htmlContent
+                  }
+                ]
+              }
+            });
+          } catch (error) {
+            console.error('Error reading HTML file:', error);
+            return res.json({
+              jsonrpc: "2.0",
+              id,
+              error: { code: -32603, message: "Internal error" }
+            });
+          }
+        }
+        if (uri === "ui://widget/cost-analysis.html") {
+          try {
+            const htmlPath = join(process.cwd(), 'web', 'widget', 'cost-analysis.html');
+            const htmlContent = readFileSync(htmlPath, 'utf8');
+            return res.json({
+              jsonrpc: "2.0",
+              id,
+              result: {
+                contents: [
+                  {
+                    uri: "ui://widget/cost-analysis.html",
+                    mimeType: "text/html+skybridge",
+                    text: htmlContent
+                  }
+                ]
+              }
+            });
+          } catch (error) {
+            console.error('Error reading HTML file:', error);
+            return res.json({
+              jsonrpc: "2.0",
+              id,
+              error: { code: -32603, message: "Internal error" }
+            });
+          }
+        }
+        if (uri === "ui://widget/service-breakdown.html") {
+          try {
+            const htmlPath = join(process.cwd(), 'web', 'widget', 'service-breakdown.html');
+            const htmlContent = readFileSync(htmlPath, 'utf8');
+            return res.json({
+              jsonrpc: "2.0",
+              id,
+              result: {
+                contents: [
+                  {
+                    uri: "ui://widget/service-breakdown.html",
+                    mimeType: "text/html+skybridge",
+                    text: htmlContent
+                  }
+                ]
+              }
+            });
+          } catch (error) {
+            console.error('Error reading HTML file:', error);
+            return res.json({
+              jsonrpc: "2.0",
+              id,
+              error: { code: -32603, message: "Internal error" }
+            });
+          }
+        }
+        if (uri === "ui://widget/report-criteria.html") {
+          try {
+            const htmlPath = join(process.cwd(), 'web', 'widget', 'report-criteria.html');
+            const htmlContent = readFileSync(htmlPath, 'utf8');
+            return res.json({
+              jsonrpc: "2.0",
+              id,
+              result: {
+                contents: [
+                  {
+                    uri: "ui://widget/report-criteria.html",
                     mimeType: "text/html+skybridge",
                     text: htmlContent
                   }

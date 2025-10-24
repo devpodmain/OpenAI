@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Report Criteria</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; background: #fff; }
+    h2 { color: #2c3e50; margin-bottom: 12px; }
+
+    .sidebar { width: 100%; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.06); padding: 16px; }
+    .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #e0e0e0; }
+    .sidebar-title { font-size: 18px; font-weight: 600; color: #2c3e50; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; margin-bottom: 6px; font-weight: 500; color: #2c3e50; }
+    .form-control { width: 100%; padding: 9px 10px; border: 1px solid #ddd; border-radius: 4px; background: white; font-size: 14px; }
+    .filter-section { background: #f8f9fa; padding: 12px; border-radius: 4px; margin-bottom: 14px; }
+    .filter-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .filter-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .filter-item input { flex: 1; padding: 6px 8px; border: 1px solid #ddd; border-radius: 4px; }
+    .btn { padding: 8px 12px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer; font-size: 14px; }
+    .btn-primary { background: #007bff; color: #fff; border-color: #007bff; }
+    .btn-secondary { background: #6c757d; color: #fff; border-color: #6c757d; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pill { padding: 6px 10px; border-radius: 999px; background: #f2f2f2; font-size: 12px; }
+    .sidebar-actions { display: flex; gap: 10px; margin-top: 14px; }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h3 class="sidebar-title">Cost Report Criteria</h3>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Report Name</label>
+      <input id="report-name" type="text" class="form-control" value="CloudBolt Report" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Date/Time</label>
+      <div class="row" id="presets"></div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Providers</label>
+      <div class="row" id="providers"></div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Granularity</label>
+      <select id="granularity" class="form-control">
+        <option value="day">Daily</option>
+        <option value="week">Weekly</option>
+        <option value="month">Monthly</option>
+      </select>
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-header">
+        <span>Applied Filters</span>
+        <button class="btn">Clear All</button>
+      </div>
+      <div class="filter-item">
+        <span>1. Billed cost</span>
+        <input type="number" placeholder="Min" />
+        <input type="number" placeholder="Max" />
+      </div>
+      <button class="btn" style="width: 100%; margin-top: 6px;">Add Filter</button>
+    </div>
+
+    <div class="sidebar-actions">
+      <button class="btn btn-secondary">Cancel</button>
+      <button class="btn btn-primary">Apply</button>
+    </div>
+  </div>
+
+  <script>
+    function getData() {
+      if (window.openai && window.openai.toolOutput) {
+        const t = window.openai.toolOutput; return t.structuredContent ?? t;
+      }
+      if (window.__mcpContent) {
+        return window.__mcpContent.structuredContent ?? window.__mcpContent;
+      }
+      return { presets: [
+        { id: 'last_7_days', label: 'Last 7 Days' },
+        { id: 'last_30_days', label: 'Last 30 Days' },
+        { id: 'month_to_date', label: 'Month to Date' }
+      ], providers: ['AWS','Azure','GCP','VMware'], current: { preset: 'last_30_days', providers: ['AWS','Azure','GCP','VMware'], granularity: 'day' } };
+    }
+
+    function renderCriteria() {
+      const d = window.data || {};
+      const presetRoot = document.getElementById('presets');
+      const providerRoot = document.getElementById('providers');
+      presetRoot.innerHTML = '';
+      providerRoot.innerHTML = '';
+      (d.presets||[]).forEach(p => {
+        const el = document.createElement('div');
+        el.className = 'pill';
+        el.textContent = p.label || p.id;
+        presetRoot.appendChild(el);
+      });
+      (d.providers||[]).forEach(p => {
+        const el = document.createElement('div');
+        el.className = 'pill';
+        el.textContent = p;
+        providerRoot.appendChild(el);
+      });
+      const g = document.getElementById('granularity');
+      if (d.current && d.current.granularity) g.value = d.current.granularity;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      window.data = getData();
+      renderCriteria();
+    });
+  </script>
+</body>
+</html>
