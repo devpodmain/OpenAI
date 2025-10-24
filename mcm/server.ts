@@ -54,6 +54,9 @@ const tools = [
           description: "Content array for display"
         }
       }
+    },
+    _meta: {
+      "openai/outputTemplate": "ui://widget/cloud-dashboard.html"
     }
   }
 ];
@@ -66,7 +69,14 @@ const toolImplementations: Record<string, (args?: any) => Promise<any>> = {
     };
   },
   "cloud-dashboard": async () => {
-    return await getCloudDashboard();
+    const result = await getCloudDashboard();
+    // Ensure the result includes the UI template metadata
+    return {
+      ...result,
+      _meta: {
+        "openai/outputTemplate": "ui://widget/cloud-dashboard.html"
+      }
+    };
   }
 };
 
@@ -93,7 +103,8 @@ app.post("/mcp", async (req, res) => {
             tools: tools.map(tool => ({
               name: tool.name,
               description: tool.description,
-              inputSchema: tool.inputSchema
+              inputSchema: tool.inputSchema,
+              ...(tool._meta && { _meta: tool._meta })
             }))
           }
         });
