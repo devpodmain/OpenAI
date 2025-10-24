@@ -4,12 +4,7 @@ import dotenv from "dotenv";
 import { z } from "zod";
 import { readFileSync } from "fs";
 import { join } from "path";
-import {
-  getCloudDashboard,
-  getCostAnalysis,
-  getServiceBreakdown,
-  getReportCriteria,
-} from "./mcp/tools/cloudDashboard";
+import { getCostAnalysis, getServiceBreakdown, getReportCriteria } from "./mcp/tools/cloudDashboard";
 
 dotenv.config();
 const app = express();
@@ -41,31 +36,7 @@ const tools = [
       }
     }
   },
-  {
-    name: "cloud-dashboard",
-    description: "View comprehensive cloud costs and usage across AWS, Azure, GCP, and VMware providers with interactive charts and detailed service breakdowns.",
-    inputSchema: {
-      type: "object",
-      properties: {},
-      required: []
-    },
-    outputSchema: {
-      type: "object",
-      properties: {
-        structuredContent: {
-          type: "object",
-          description: "Structured cloud cost data"
-        },
-        content: {
-          type: "array",
-          description: "Content array for display"
-        }
-      }
-    },
-    _meta: {
-      "openai/outputTemplate": "ui://widget/cloud-dashboard.html"
-    }
-  },
+  
   {
     name: "dashboard.cost-analysis",
     description: "Cost analysis summary and time series.",
@@ -142,16 +113,7 @@ const toolImplementations: Record<string, (args?: any) => Promise<any>> = {
       message: `Hello, ${args.name}! This is a working MCP tool.`
     };
   },
-  "cloud-dashboard": async () => {
-    const result = await getCloudDashboard();
-    // Ensure the result includes the UI template metadata
-    return {
-      ...result,
-      _meta: {
-        "openai/outputTemplate": "ui://widget/cloud-dashboard.html"
-      }
-    };
-  },
+  
   "dashboard.cost-analysis": async (args) => {
     const result = await getCostAnalysis(args);
     return {
@@ -210,12 +172,7 @@ app.post("/mcp", async (req, res) => {
           id,
           result: {
             resources: [
-              {
-                uri: "ui://widget/cloud-dashboard.html",
-                name: "cloud-dashboard-ui",
-                description: "Cloud cost dashboard UI component",
-                mimeType: "text/html+skybridge"
-              },
+              
               {
                 uri: "ui://widget/cost-analysis.html",
                 name: "cost-analysis-ui",
@@ -240,32 +197,7 @@ app.post("/mcp", async (req, res) => {
 
       case "resources/read":
         const { uri } = params || {};
-        if (uri === "ui://widget/cloud-dashboard.html") {
-          try {
-            const htmlPath = join(process.cwd(), 'web', 'widget', 'cloud-dashboard.html');
-            const htmlContent = readFileSync(htmlPath, 'utf8');
-            return res.json({
-              jsonrpc: "2.0",
-              id,
-              result: {
-                contents: [
-                  {
-                    uri: "ui://widget/cloud-dashboard.html",
-                    mimeType: "text/html+skybridge",
-                    text: htmlContent
-                  }
-                ]
-              }
-            });
-          } catch (error) {
-            console.error('Error reading HTML file:', error);
-            return res.json({
-              jsonrpc: "2.0",
-              id,
-              error: { code: -32603, message: "Internal error" }
-            });
-          }
-        }
+        
         if (uri === "ui://widget/cost-analysis.html") {
           try {
             const htmlPath = join(process.cwd(), 'web', 'widget', 'cost-analysis.html');
@@ -409,10 +341,7 @@ app.post("/mcp", async (req, res) => {
 });
 
 // REST endpoint example
-app.get("/api/cloud-dashboard", async (_req, res) => {
-  const result = await getCloudDashboard();
-  res.json(result);
-});
+// Removed aggregate REST endpoint per request
 
 // Static assets
 app.use("/web", express.static("web"));

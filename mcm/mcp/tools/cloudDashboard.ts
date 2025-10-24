@@ -76,10 +76,13 @@ export async function getCostAnalysis(args: CostAnalysisArgs = {}) {
 
   const series = dailyData;
 
+  const structured = { summary, providers: filteredProviders, series };
   return {
-    summary,
-    providers: filteredProviders,
-    series,
+    ...structured,
+    structuredContent: structured,
+    content: [
+      { type: "text", text: "Cost Analysis", _meta: {} }
+    ],
     _meta: {
       "openai/outputTemplate": "ui://widget/cost-analysis.html",
       timestamp: new Date().toISOString(),
@@ -110,8 +113,13 @@ export async function getServiceBreakdown(args: ServiceBreakdownArgs = {}) {
   const limit = args.limit && args.limit > 0 ? args.limit : 10;
   list = list.slice(0, limit);
 
+  const structured = { services: list };
   return {
-    services: list,
+    ...structured,
+    structuredContent: structured,
+    content: [
+      { type: "text", text: "Service Cost Breakdown", _meta: {} }
+    ],
     _meta: {
       "openai/outputTemplate": "ui://widget/service-breakdown.html",
       timestamp: new Date().toISOString(),
@@ -128,7 +136,7 @@ export async function getReportCriteria(args: ReportCriteriaArgs = {}) {
 
   const providers = ["AWS", "Azure", "GCP", "VMware"];
 
-  return {
+  const structured = {
     presets,
     providers,
     tags: [],
@@ -136,7 +144,14 @@ export async function getReportCriteria(args: ReportCriteriaArgs = {}) {
       preset: args.current?.preset ?? "last_30_days",
       providers: args.current?.providers ?? providers,
       granularity: args.current?.granularity ?? "day",
-    },
+    }
+  };
+  return {
+    ...structured,
+    structuredContent: structured,
+    content: [
+      { type: "text", text: "Report Criteria", _meta: {} }
+    ],
     _meta: {
       "openai/outputTemplate": "ui://widget/report-criteria.html",
       timestamp: new Date().toISOString(),
@@ -144,46 +159,4 @@ export async function getReportCriteria(args: ReportCriteriaArgs = {}) {
   };
 }
 
-export async function getCloudDashboard() {
-  const [cost, svc, crit] = await Promise.all([
-    getCostAnalysis(),
-    getServiceBreakdown(),
-    getReportCriteria(),
-  ]);
-
-  return {
-    structuredContent: {
-      summary: cost.summary,
-      providers: cost.providers,
-      dailyData: cost.series,
-      services: svc.services,
-      criteria: crit.current,
-    },
-    content: [
-      { type: "text", text: "CloudBolt Cost Report Dashboard", _meta: {} },
-    ],
-    _meta: {
-      "openai/outputTemplate": "ui://widget/cloud-dashboard.html",
-      timestamp: new Date().toISOString(),
-      reportName: "CloudBolt Report 241024",
-    },
-  };
-}
-
-export const cloudDashboardTool = {
-  name: "cloud-dashboard",
-  title: "Multi-Cloud Cost Dashboard",
-  description:
-    "View comprehensive cloud costs and usage across AWS, Azure, GCP, and VMware.",
-  _meta: {
-    "openai/outputTemplate": "ui://widget/cloud-dashboard.html",
-    "openai/appsSdk": {
-      category: "analytics",
-      tags: ["cloud", "cost", "dashboard", "analytics"],
-      version: "1.0.0",
-    },
-  },
-  inputSchema: {},
-  run: getCloudDashboard as any,
-};
-
+// Aggregate view removed per request; only split views are exported.
