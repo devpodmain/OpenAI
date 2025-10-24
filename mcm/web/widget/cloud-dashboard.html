@@ -519,9 +519,16 @@
 <script>
         let data = {};
 
-        // Get data from MCP content or use fallback
+        // Get data from OpenAI Apps SDK API or use fallback
         function getDashboardData() {
-            // Try to get data from MCP content first
+            // Try to get data from OpenAI Apps SDK API first
+            if (window.openai && window.openai.toolOutput && window.openai.toolOutput.structuredContent) {
+                data = window.openai.toolOutput.structuredContent;
+                console.log('Dashboard data loaded from OpenAI Apps SDK:', data);
+                return data;
+            }
+            
+            // Fallback: try MCP content format
             if (window.__mcpContent && window.__mcpContent.structuredContent) {
                 data = window.__mcpContent.structuredContent;
                 console.log('Dashboard data loaded from MCP:', data);

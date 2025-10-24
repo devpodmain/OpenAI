@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { z } from "zod";
+import { readFileSync } from "fs";
+import { join } from "path";
 import { cloudDashboardTool, getCloudDashboard } from "./mcp/tools/cloudDashboard.js";
 
 dotenv.config();
@@ -107,6 +109,56 @@ app.post("/mcp", async (req, res) => {
               ...(tool._meta && { _meta: tool._meta })
             }))
           }
+        });
+
+      case "resources/list":
+        return res.json({
+          jsonrpc: "2.0",
+          id,
+          result: {
+            resources: [
+              {
+                uri: "ui://widget/cloud-dashboard.html",
+                name: "cloud-dashboard-ui",
+                description: "Cloud cost dashboard UI component",
+                mimeType: "text/html+skybridge"
+              }
+            ]
+          }
+        });
+
+      case "resources/read":
+        const { uri } = params || {};
+        if (uri === "ui://widget/cloud-dashboard.html") {
+          try {
+            const htmlPath = join(process.cwd(), 'web', 'widget', 'cloud-dashboard.html');
+            const htmlContent = readFileSync(htmlPath, 'utf8');
+            return res.json({
+              jsonrpc: "2.0",
+              id,
+              result: {
+                contents: [
+                  {
+                    uri: "ui://widget/cloud-dashboard.html",
+                    mimeType: "text/html+skybridge",
+                    text: htmlContent
+                  }
+                ]
+              }
+            });
+          } catch (error) {
+            console.error('Error reading HTML file:', error);
+            return res.json({
+              jsonrpc: "2.0",
+              id,
+              error: { code: -32603, message: "Internal error" }
+            });
+          }
+        }
+        return res.json({
+          jsonrpc: "2.0",
+          id,
+          error: { code: -32601, message: "Resource not found" }
         });
 
       case "tools/call":
