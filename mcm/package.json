@@ -1,29 +1,31 @@
 {
-  "name": "cloud-cost-dashboard",
-  "version": "1.0.0",
-  "description": "Professional cloud cost analysis and reporting dashboard for OpenAI Apps SDK",
+  "name": "multi-cloud-mcp",
+  "version": "0.1.0",
+  "description": "Multi-Cloud Cost & Resource Management MCP server",
   "main": "dist/server.js",
+  "type": "commonjs",
   "scripts": {
+    "dev": "ts-node src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "ts-node server.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
+    "@prisma/client": "^5.20.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
-    "zod": "^3.25.76"
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.3",
-    "@types/node": "^24.9.1",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.1",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/node": "^20.12.7",
+    "prisma": "^5.20.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.4.5"
   }
 }
